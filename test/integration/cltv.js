@@ -2,11 +2,11 @@
 
 var assert = require('assert')
 var bitcoin = require('../../')
-var blockchain = require('./_blockchain')
+var testnetUtils = require('./_testnet')
 
-var network = bitcoin.networks.testnet
-var alice = bitcoin.ECPair.fromWIF('cScfkGjbzzoeewVWmU2hYPUHeVGJRDdFt7WhmrVVGkxpmPP8BHWe', network)
-var bob = bitcoin.ECPair.fromWIF('cMkopUXKWsEzAjfa1zApksGRwjVpJRB3831qM9W4gKZsLwjHXA9x', network)
+var testnet = bitcoin.networks.testnet
+var alice = bitcoin.ECPair.fromWIF('cScfkGjbzzoeewVWmU2hYPUHeVGJRDdFt7WhmrVVGkxpmPP8BHWe', testnet)
+var bob = bitcoin.ECPair.fromWIF('cMkopUXKWsEzAjfa1zApksGRwjVpJRB3831qM9W4gKZsLwjHXA9x', testnet)
 
 describe('bitcoinjs-lib (CLTV)', function () {
   var hashType = bitcoin.Transaction.SIGHASH_ALL
@@ -40,16 +40,16 @@ describe('bitcoinjs-lib (CLTV)', function () {
     var timeUtc = utcNow() - (3600 * 3)
     var redeemScript = cltvCheckSigOutput(alice, bob, timeUtc)
     var scriptPubKey = bitcoin.script.scriptHash.output.encode(bitcoin.crypto.hash160(redeemScript))
-    var address = bitcoin.address.fromOutputScript(scriptPubKey, network)
+    var address = bitcoin.address.fromOutputScript(scriptPubKey, testnet)
 
     // fund the P2SH(CLTV) address
-    blockchain.t.faucet(address, 2e4, function (err, unspent) {
+    testnetUtils.faucet(address, 2e4, function (err, unspent) {
       if (err) return done(err)
 
-      var tx = new bitcoin.TransactionBuilder(network)
+      var tx = new bitcoin.TransactionBuilder(testnet)
       tx.setLockTime(timeUtc)
       tx.addInput(unspent.txId, 0, 0xfffffffe)
-      tx.addOutput(blockchain.t.RETURN, 1e4)
+      tx.addOutput(testnetUtils.RETURN_ADDRESS, 1e4)
 
       var txRaw = tx.buildIncomplete()
       var signatureHash = txRaw.hashForSignature(0, redeemScript, hashType)
@@ -62,7 +62,7 @@ describe('bitcoinjs-lib (CLTV)', function () {
 
       txRaw.setInputScript(0, redeemScriptSig)
 
-      blockchain.t.transactions.propagate(txRaw.toHex(), done)
+      testnetUtils.transactions.propagate(txRaw.toHex(), done)
     })
   })
 
@@ -74,15 +74,15 @@ describe('bitcoinjs-lib (CLTV)', function () {
     var timeUtc = utcNow() - (3600 * 2)
     var redeemScript = cltvCheckSigOutput(alice, bob, timeUtc)
     var scriptPubKey = bitcoin.script.scriptHash.output.encode(bitcoin.crypto.hash160(redeemScript))
-    var address = bitcoin.address.fromOutputScript(scriptPubKey, network)
+    var address = bitcoin.address.fromOutputScript(scriptPubKey, testnet)
 
     // fund the P2SH(CLTV) address
-    blockchain.t.faucet(address, 2e4, function (err, unspent) {
+    testnetUtils.faucet(address, 2e4, function (err, unspent) {
       if (err) return done(err)
 
-      var tx = new bitcoin.TransactionBuilder(network)
+      var tx = new bitcoin.TransactionBuilder(testnet)
       tx.addInput(unspent.txId, 0, 0xfffffffe)
-      tx.addOutput(blockchain.t.RETURN, 1e4)
+      tx.addOutput(testnetUtils.RETURN_ADDRESS, 1e4)
 
       var txRaw = tx.buildIncomplete()
       var signatureHash = txRaw.hashForSignature(0, redeemScript, hashType)
@@ -94,7 +94,7 @@ describe('bitcoinjs-lib (CLTV)', function () {
 
       txRaw.setInputScript(0, redeemScriptSig)
 
-      blockchain.t.transactions.propagate(txRaw.toHex(), done)
+      testnetUtils.transactions.propagate(txRaw.toHex(), done)
     })
   })
 
@@ -106,16 +106,16 @@ describe('bitcoinjs-lib (CLTV)', function () {
     var timeUtc = utcNow() + (3600 * 2)
     var redeemScript = cltvCheckSigOutput(alice, bob, timeUtc)
     var scriptPubKey = bitcoin.script.scriptHash.output.encode(bitcoin.crypto.hash160(redeemScript))
-    var address = bitcoin.address.fromOutputScript(scriptPubKey, network)
+    var address = bitcoin.address.fromOutputScript(scriptPubKey, testnet)
 
     // fund the P2SH(CLTV) address
-    blockchain.t.faucet(address, 2e4, function (err, unspent) {
+    testnetUtils.faucet(address, 2e4, function (err, unspent) {
       if (err) return done(err)
 
-      var tx = new bitcoin.TransactionBuilder(network)
+      var tx = new bitcoin.TransactionBuilder(testnet)
       tx.setLockTime(timeUtc)
       tx.addInput(unspent.txId, 0, 0xfffffffe)
-      tx.addOutput(blockchain.t.RETURN, 1e4)
+      tx.addOutput(testnetUtils.RETURN_ADDRESS, 1e4)
 
       var txRaw = tx.buildIncomplete()
       var signatureHash = txRaw.hashForSignature(0, redeemScript, hashType)
@@ -128,7 +128,7 @@ describe('bitcoinjs-lib (CLTV)', function () {
 
       txRaw.setInputScript(0, redeemScriptSig)
 
-      blockchain.t.transactions.propagate(txRaw.toHex(), function (err) {
+      testnetUtils.transactions.propagate(txRaw.toHex(), function (err) {
         assert.throws(function () {
           if (err) throw err
         }, /Error: 64: non-final/)
